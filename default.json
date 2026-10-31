@@ -8,6 +8,25 @@
     "gomodTidy",
     "gomodUpdateImportPaths"
   ],
+  "customManagers": [
+    {
+      "description": [
+        "A tool a workflow installs with `go install module@vN` is a pinned dependency that no manager reads. Renovate's gomod manager looks at go.mod; github-actions looks at `uses:`; a version inside a `run:` block is seen by neither, so it is a pin that will never be offered an update.",
+        "Measured here on 2026-10-31, which is why this organisation now carries the rule: gitsafe's own ci.yml pins `github.com/go-fleettools/fleettools/cmd/vulngate@v0.20.1` in its `govulncheck, judged by vulngate` step, while that module had reached v0.56.0 — thirty-six minor versions, and nothing said so. The step whose whole job is to decide what a vulnerability finding means was judging with a year-old judge, in the organisation that guards the credential.",
+        "depName is the MODULE, not the package: `go install` takes a package path and the proxy knows modules. The `/cmd/<name>` group is OPTIONAL because not every tool has its main package under cmd/ — go-fleettools/prwait and staletools have theirs at the module root, and `go install github.com/go-fleettools/prwait@v0.2.1` is how they are installed. Both shapes were measured against this expression when it was first written: `…/cmd/vulngate@v0.20.1` gives `fleettools`, `…/prwait@v0.2.1` gives `prwait`. A module whose own path ended in `/cmd/<something>` would still be read wrong; none does here.",
+        "A version of `latest` is deliberately NOT matched: there is no version to compare or rewrite. `go install golang.org/x/vuln/cmd/govulncheck@latest` in these lanes is a deliberate float, not an oversight.",
+        "The third copy of this manager, after go-fleettools/.github and go-crdt/.github. Two copies of a rule is one copy being wrong, and the alternative — a shared preset repository — is a dependency every organisation's Renovate run must fetch before it can read its own config. Kept as copies deliberately, and every copy's description says so."
+      ],
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/[^/]+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "go install (?<depName>[^\\s@]+?)(?:/cmd/[^\\s@/]+)?@(?<currentValue>v[^\\s]+)"
+      ],
+      "datasourceTemplate": "go"
+    }
+  ],
   "packageRules": [
     {
       "description": [
